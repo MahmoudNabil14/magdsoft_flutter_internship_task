@@ -1,6 +1,8 @@
 part of 'global_cubit.dart';
 
 @immutable
-abstract class GlobalState {}
+abstract class GlobalStates {}
 
-class GlobalInitial extends GlobalState {}
+class GlobalInitial extends GlobalStates {}
+
+class ChangeFiltersChoice extends GlobalStates {}

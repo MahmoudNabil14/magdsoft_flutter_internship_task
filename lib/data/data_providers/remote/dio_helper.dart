@@ -1,7 +1,12 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:magdsoft_flutter_structure/constants/end_points.dart';
 
-class DioHelper {
+import 'api_consumer.dart';
+import 'api_interceptor.dart';
+import 'error/errors_handler.dart';
+
+class DioHelper implements ApiConsumer {
   static Dio? dio;
 
   static init() {
@@ -9,23 +14,45 @@ class DioHelper {
       BaseOptions(
         baseUrl: baseURL,
         receiveDataWhenStatusError: true,
+        receiveTimeout: 10 * 1000,
+        connectTimeout: 10 * 1000,
       ),
     );
+    dio!.interceptors.add(AppInterceptor());
+    if (kDebugMode) {
+      dio!.interceptors.add(LogInterceptor(
+        responseBody: true,
+        error: true,
+        requestHeader: false,
+        responseHeader: false,
+        request: true,
+        requestBody: true,
+      ));
+    }
   }
 
-  static Future<Response> getData(
-      {required String url, required Map<String, dynamic> query}) async {
-    return await dio!.get(url, queryParameters: query);
+  @override
+  Future get(
+      {required String path, Map<String, dynamic>? queryParameters}) async {
+    try {
+      return await dio!.get(path, queryParameters: queryParameters);
+    } on DioError catch (error) {
+      ErrorsHandler.handleDioError(error);
+    }
   }
 
-  static Future<Response> postData({
-    required String url,
-    Map<String, dynamic>? query,
-    required Map<String, dynamic> body,
-  }) async {
-    dio!.options.headers = {
-      'Content-Type': 'application/json',
-    };
-    return await dio!.post(url, data: body);
+  @override
+  Future post(
+      {required String path,
+      Map<String, dynamic>? body,
+      Map<String, dynamic>? queryParameters}) async {
+    try {
+      dio!.options.headers = {
+        'Content-Type': 'application/json',
+      };
+      return await dio!.post(path, data: body);
+    } on DioError catch (error) {
+      ErrorsHandler.handleDioError(error);
+    }
   }
 }
